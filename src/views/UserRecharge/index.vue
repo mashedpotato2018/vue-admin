@@ -1,12 +1,33 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="listQuery.title" placeholder="Title" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model="listQuery.ip" placeholder="服务器IP" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-date-picker
+        v-model="listQuery.bTime"
+        type="date"
+        style="vertical-align: top"
+        placeholder="开始时间"
+      />
+      <el-date-picker
+        v-model="listQuery.eTime"
+        type="date"
+        style="vertical-align: top"
+        placeholder="结束时间"
+      />
+      <span
+        style="margin: 0 10px;vertical-align: middle"
+      >最少金额:</span>
+      <el-input-number
+        v-model="listQuery.minMoney"
+        style="vertical-align: top"
+        label=""
+        @change="handleChange"
+      />
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
         查询
       </el-button>
       <el-button v-waves :loading="downloadLoading" class="filter-item" type="primary" icon="el-icon-download" @click="handleDownload">
-        Export
+        下载表格
       </el-button>
     </div>
 
@@ -20,64 +41,59 @@
       style="width: 100%;"
       @sort-change="sortChange"
     >
-      <el-table-column label="所在服务器IP" prop="id" sortable="custom" align="center" width="80">
+      <el-table-column label="所在服务器IP" align="center">
         <template slot-scope="scope">
-          <span>{{ scope.row.id }}</span>
+          <span>{{ scope.row.IPAddress }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="用户游戏ID" width="150px" align="center">
+      <el-table-column label="所在服务器名称" align="center">
         <template slot-scope="scope">
-          <span>{{ scope.row.timestamp | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
+          <span>{{ scope.row.GameName }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="手机号" min-width="150px">
-        <template slot-scope="{row}">
-          <span class="link-type">{{ row.title }}</span>
-          <el-tag>{{ row.type }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="在线充值总额" width="110px" align="center">
+      <el-table-column label="用户游戏ID" align="center">
         <template slot-scope="scope">
-          <span>{{ scope.row.author }}</span>
+          <span>{{ scope.row.UserID }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="提现总额" width="80px">
+      <el-table-column label="手机号" align="center">
+        <template slot-scope="{row}">
+          <span>{{ row.PhoneNumber }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="在线充值总额" align="center" prop="TotalRechargeLimit" sortable="custom">
         <template slot-scope="scope">
-          <svg-icon v-for="n in +scope.row.importance" :key="n" icon-class="star" class="meta-item__icon" />
+          <span>{{ scope.row.TotalRechargeLimit }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="注册时间" align="center" width="95">
-        <template slot-scope="{row}">
-          <span v-if="row.pageviews" class="link-type" @click="handleFetchPv(row.pageviews)">{{ row.pageviews }}</span>
-          <span v-else>0</span>
+      <el-table-column label="提现总额" prop="TotalWithdrawalLimit" sortable="custom">
+        <template slot-scope="scope">
+          <span>{{ scope.row.TotalWithdrawalLimit }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="最后登陆时间" class-name="status-col" width="100">
+      <el-table-column label="注册时间" align="center" prop="RegisterTime" sortable="custom">
         <template slot-scope="{row}">
-          <el-tag :type="row.status | statusFilter">
-            {{ row.status }}
-          </el-tag>
+          <span>{{ row.RegisterTime | DateFormat | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="地址" class-name="status-col" width="100">
+      <el-table-column label="最后登陆时间" class-name="status-col" prop="LastLogonTime" sortable="custom">
         <template slot-scope="{row}">
-          <el-tag :type="row.status | statusFilter">
-            {{ row.status }}
-          </el-tag>
+          <span>{{ row.LastLogonTime | DateFormat | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="支付宝" class-name="status-col" width="100">
+      <el-table-column label="注册地址" class-name="status-col">
         <template slot-scope="{row}">
-          <el-tag :type="row.status | statusFilter">
-            {{ row.status }}
-          </el-tag>
+          <span>{{ row.RegisterIP }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="银行卡" class-name="status-col" width="100">
+      <el-table-column label="支付宝" class-name="status-col">
         <template slot-scope="{row}">
-          <el-tag :type="row.status | statusFilter">
-            {{ row.status }}
-          </el-tag>
+          <span>{{ row.AlipayNumber }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="银行卡" class-name="status-col">
+        <template slot-scope="{row}">
+          <span>{{ row.BankNumber }}</span>
         </template>
       </el-table-column>
     </el-table>
@@ -96,6 +112,9 @@ export default {
   components: { Pagination },
   directives: { waves },
   filters: {
+    DateFormat(str) {
+      return parseInt(str.substr(6, 13))
+    },
     statusFilter(status) {
       const statusMap = {
         published: 'success',
@@ -117,12 +136,11 @@ export default {
         bTime: parseTime(new Date().setDate(new Date().getDate() - 7)),
         eTime: parseTime(new Date()),
         ip: '',
-        sort: '+id',
+        sort: 'UserID',
+        sortType: 'UserID',
         minMoney: 0
       },
       downloadLoading: false,
-      importanceOptions: [1, 2, 3],
-      sortOptions: [{ label: 'ID Ascending', key: '+id' }, { label: 'ID Descending', key: '-id' }],
       dialogStatus: ''
     }
   },
@@ -130,17 +148,20 @@ export default {
     this.getList()
   },
   methods: {
+    DateFormat(str) {
+      return parseInt(str.substr(6, 13))
+    },
     getList() {
       this.listLoading = true
       fetchList(this.listQuery).then(response => {
-        this.list = response.data.items
-        this.total = response.data.total
-
-        // Just to simulate the time of the request
-        setTimeout(() => {
-          this.listLoading = false
-        }, 1.5 * 1000)
+        this.list = response.data.Result
+        this.total = response.data.MaxCount
+        this.listLoading = false
       })
+    },
+    handleChange(value) {
+      this.listQuery.minMoney = value
+      this.handleFilter()
     },
     handleFilter() {
       this.listQuery.page = 1
@@ -148,36 +169,57 @@ export default {
     },
     sortChange(data) {
       const { prop, order } = data
-      if (prop === 'id') {
-        this.sortByID(order)
-      }
+      this.sortByID(prop, order)
     },
-    sortByID(order) {
-      if (order === 'ascending') {
-        this.listQuery.sort = '+id'
-      } else {
-        this.listQuery.sort = '-id'
-      }
+    sortByID(column, order) {
+      const type = { ascending: 0, descending: 1 }
+      this.listQuery.sort = column
+      this.listQuery.sortType = type[order]
       this.handleFilter()
     },
     handleDownload() {
+      const diffTime = new Date(this.listQuery.eTime).getTime() - new Date(this.listQuery.bTime).getTime()
+      const days = Math.floor(diffTime / (24 * 3600 * 1000))
+      if (days > 30 * 3) {
+        this.$message({
+          showClose: true,
+          message: '只能下载三个月之内的所有数据',
+          type: 'warning'
+        })
+        return
+      }
       this.downloadLoading = true
       import('@/vendor/Export2Excel').then(excel => {
-        const tHeader = ['timestamp', 'title', 'type', 'importance', 'status']
-        const filterVal = ['timestamp', 'title', 'type', 'importance', 'status']
-        const data = this.formatJson(filterVal, this.list)
-        excel.export_json_to_excel({
-          header: tHeader,
-          data,
-          filename: 'table-list'
+        const tHeader = ['所在服务器IP', '所在服务器名称',
+          '用户游戏ID', '手机号', '在线充值总额',
+          '提现总额', '注册时间', '最后登录时间',
+          '注册地址', '支付宝', '银行卡'
+        ]
+        const filterVal = ['IPAddress', 'GameName',
+          'UserID', 'PhoneNumber', 'TotalRechargeLimit',
+          'TotalWithdrawalLimit', 'RegisterTime', 'LastLogonTime',
+          'RegisterIP', 'AlipayNumber', 'BankNumber']
+        const AllQuery = {}
+        Object.assign(AllQuery, this.listQuery)
+        AllQuery.limit = this.total
+        fetchList(AllQuery).then(response => {
+          const Alldata = response.data.Result
+          const data = this.formatJson(filterVal, Alldata)
+          excel.export_json_to_excel({
+            header: tHeader,
+            data,
+            filename: '数据中心-用户统计'
+          })
+          this.downloadLoading = false
         })
-        this.downloadLoading = false
       })
     },
     formatJson(filterVal, jsonData) {
+      const that = this
+      console.log(that)
       return jsonData.map(v => filterVal.map(j => {
-        if (j === 'timestamp') {
-          return parseTime(v[j])
+        if (j === 'RegisterTime' || j === 'LastLogonTime') {
+          return parseTime(that.DateFormat(v[j]))
         } else {
           return v[j]
         }

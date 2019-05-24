@@ -62,7 +62,7 @@ export const constantRoutes = [
         path: 'UserRecharge',
         component: () => import('@/views/UserRecharge/index'),
         name: 'UserRecharge',
-        meta: { title: '用户充值', icon: 'dashboard', affix: false }
+        meta: { title: '用户统计', icon: 'user', affix: false }
       }
     ]
   }

@@ -24,7 +24,7 @@ export default {
   },
   data() {
     return {
-      title: 'Vue Element Admin',
+      title: '数据中心',
       logo: 'https://wpimg.wallstcn.com/69a1c46c-eb1c-4b46-8bd4-e9e686ef5251.png'
     }
   }
@@ -47,8 +47,9 @@ export default {
   height: 50px;
   line-height: 50px;
   background: #2b2f3a;
-  text-align: center;
+  /*text-align: center;*/
   overflow: hidden;
+  padding-left: 18px;
 
   & .sidebar-logo-link {
     height: 100%;
